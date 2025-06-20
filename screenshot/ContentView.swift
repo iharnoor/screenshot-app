@@ -55,7 +55,7 @@ struct ContentView: View {
             .overlay(
                 VStack(spacing: 12) {
                     Image(systemName: "photo.badge.plus")
-                        .font( . sy1stem(size: 50))
+                        .font( .system(size: 50))
                         .foregroundColor(.secondary)
                     
                     Text("No screenshot captured yet")
