@@ -20,6 +20,14 @@ struct ImageEnhancementView: View {
     
     @State private var padding: Double = 20
     
+    @State private var textEnabled = false
+    @State private var textContent = "Your Text Here"
+    @State private var textSize: Double = 24
+    @State private var textColor = Color.white
+    @State private var textPosition: CGPoint = CGPoint(x: 0.5, y: 0.1)
+    @State private var textBold = false
+    @State private var textItalic = false
+    
     @Environment(\.dismiss) private var dismiss
     
     enum BackgroundType: String, CaseIterable {
@@ -118,6 +126,7 @@ struct ImageEnhancementView: View {
                     cornerRadiusControls
                     backgroundControls
                     paddingControls
+                    textControls
                 }
             }
         }
@@ -240,6 +249,60 @@ struct ImageEnhancementView: View {
         }
     }
     
+    private var textControls: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Text Overlay", isOn: $textEnabled)
+                .toggleStyle(.switch)
+            
+            if textEnabled {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("Text Content", text: $textContent)
+                        .textFieldStyle(.roundedBorder)
+                    
+                    HStack {
+                        Text("Size")
+                        Spacer()
+                        Text("\(Int(textSize))")
+                            .foregroundColor(.secondary)
+                    }
+                    Slider(value: $textSize, in: 12...72)
+                    
+                    ColorPicker("Text Color", selection: $textColor)
+                    
+                    HStack {
+                        Toggle("Bold", isOn: $textBold)
+                            .toggleStyle(.switch)
+                        Toggle("Italic", isOn: $textItalic)
+                            .toggleStyle(.switch)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Position")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        HStack {
+                            Text("X")
+                            Slider(value: Binding(
+                                get: { textPosition.x },
+                                set: { textPosition.x = $0 }
+                            ), in: 0...1)
+                        }
+                        
+                        HStack {
+                            Text("Y")
+                            Slider(value: Binding(
+                                get: { textPosition.y },
+                                set: { textPosition.y = $0 }
+                            ), in: 0...1)
+                        }
+                    }
+                }
+                .padding(.leading, 16)
+            }
+        }
+    }
+    
     private var footerView: some View {
         HStack {
             Button("Reset") {
@@ -274,6 +337,13 @@ struct ImageEnhancementView: View {
         backgroundColor = .white
         gradientColors = [.purple, .pink]
         padding = 20
+        textEnabled = false
+        textContent = "Your Text Here"
+        textSize = 24
+        textColor = .white
+        textPosition = CGPoint(x: 0.5, y: 0.1)
+        textBold = false
+        textItalic = false
     }
     
     private func applyEnhancements() {
@@ -331,6 +401,36 @@ struct ImageEnhancementView: View {
         }
         
         image.draw(in: imageRect)
+        
+        if textEnabled && !textContent.isEmpty {
+            let textRect = NSRect(
+                x: imageRect.origin.x + (imageRect.width * textPosition.x) - 100,
+                y: imageRect.origin.y + (imageRect.height * (1 - textPosition.y)) - 50,
+                width: 200,
+                height: 100
+            )
+            
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = .center
+            
+            var fontDescriptor = NSFontDescriptor(name: "Helvetica", size: textSize)
+            if textBold {
+                fontDescriptor = fontDescriptor.withSymbolicTraits(.bold)
+            }
+            if textItalic {
+                fontDescriptor = fontDescriptor.withSymbolicTraits(.italic)
+            }
+            
+            let font = NSFont(descriptor: fontDescriptor, size: textSize) ?? NSFont.systemFont(ofSize: textSize)
+            
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor(textColor),
+                .paragraphStyle: paragraphStyle
+            ]
+            
+            textContent.draw(in: textRect, withAttributes: attributes)
+        }
         
         enhancedImage.unlockFocus()
         
